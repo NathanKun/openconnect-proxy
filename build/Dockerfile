@@ -18,14 +18,17 @@ RUN apk add --no-cache ca-certificates wget \
     && make \
     && make install \
     # add vpn-slice with dependencies (dig) https://github.com/dlenski/vpn-slice
-    && apk add --no-cache python3 bind-tools && pip3 install --upgrade pip \
+    && apk add --no-cache python3 cmd:pip3 bind-tools && pip3 install --upgrade pip \
     && pip3 install https://github.com/dlenski/vpn-slice/archive/master.zip \
     # always add the docker DNS server
-    && grep -qxF 'nameserver 127.0.0.11' /etc/resolv.conf || echo 'nameserver 127.0.0.11' >> /etc/resolv.conf \
+    # && grep -qxF 'nameserver 127.0.0.11' /etc/resolv.conf || echo 'nameserver 127.0.0.11' >> /etc/resolv.conf \
     && apk del .build-deps wget
 
 # Use an up-to-date version of vpnc-script
 # https://www.infradead.org/openconnect/vpnc-script.html
+
+COPY ssl.conf /etc/ssl/ssl.conf
+
 COPY vpnc-script /etc/vpnc/vpnc-script
 RUN chmod 755 /etc/vpnc/vpnc-script
 
@@ -37,4 +40,6 @@ RUN chmod +x /entrypoint.sh
 EXPOSE 8888
 EXPOSE 8889
 
+# allow unsafe legacy renegotiation
+ENV OPENSSL_CONF=/etc/ssl/ssl.conf
 ENTRYPOINT ["/entrypoint.sh"]
